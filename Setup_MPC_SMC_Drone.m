@@ -19,8 +19,8 @@ J = diag([Jxx Jyy Jzz]);
 N = 10;
 ts_z = 0.2;
 
-Q_z = 17;      %500
-Qt_z = 0.005;     %-0.005
+Q_z = 500000;      %500
+Qt_z = 0.0000001;     %-0.005
 
 A_z = [
 0,1;
@@ -125,7 +125,7 @@ u_des_xy = [0;0];
 PHI_xy_I = A_xy_d;
 Aux_PSI_xy_I = B_xy_d;
 
-for i = 1:N
+for i = 1:N_xy
     
     PSI_xy_I = [Aux_PSI_xy_I, zeros(n_xy,(N_xy-i)*nu_xy)];
     Phi_xy = [Phi_xy PHI_xy_I];
