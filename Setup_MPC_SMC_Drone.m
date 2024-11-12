@@ -17,10 +17,10 @@ J = diag([Jxx Jyy Jzz]);
 %% %Z MPC parameters
 
 N = 10;
-ts_z = 0.2;
+ts_z = 0.25;
 
-Q_z = 500000;      %500
-Qt_z = 0.0000001;     %-0.005
+Q_z = 10;      %500
+Qt_z = 0.005;     %-0.005
 
 A_z = [
 0,1;
@@ -84,10 +84,10 @@ end
 %% XY MPC parameters
 
 N_xy = 10;
-ts_xy = 0.2;
+ts_xy = 0.25;
 
 Q_xy = diag([10 10]);
-R_xy = diag([10 10]);
+R_xy = diag([5 5]);
 
 
 A_xy = [
@@ -148,3 +148,41 @@ end
 
 
 
+
+%% Setup Linear Movement Controller Parameters
+
+N_l = 10;        %Prediction horizon for the linear displacement 10
+ts_l = 0.25;    
+
+% Qy_l = [50 0; 0 50];     %1000 500
+% Qu_l = [1 0; 0 1]; %75 50
+
+Qy_l = [10 0; 0 10];     %10 10
+Qu_l = [5 0; 0 5]; %1 1
+
+ud_l = [0;0];
+          
+A_lc = [0 1 0 0; 0 0 0 0; 0 0 0 1; 0 0 0 0];
+B_lc = [0 0; g 0; 0 0; 0 -g];
+C_l = [1 0 0 0;0 0 1 0];
+D_l = [0 0; 0 0];
+[A_l,B_l] = c2d(A_lc,B_lc,ts_l); 
+
+[n_l,nu_l] = size(B_l);
+nr_l = size(C_l,1);
+
+ul_max = [pi/4;pi/4];    %Setup the upper and lower input constraints (RP commands)
+ul_min = [-pi/4;-pi/4];
+
+yl_max = [2;2];
+yl_min = [-2;-2];
+% yl_max = [pi/8;pi/8];
+% yl_min = [-pi/8;-pi/8];
+
+delmax_l = [0.2;0.2];
+delmin_l = [-0.2;-0.2];
+
+[max_ul,min_ul] = InConstraints(ul_max,ul_min,N_l);
+[H_l,F1_l,F2_l,F3_l,F4_l,phi_l,psi_l] = Cost_Funct(A_l,B_l,C_l,G,Qy_l,Qu_l,N_l,2);
+psi_last = psi_l(N_l*n_l-(n_l-1):N_l*n_l,:);
+[Aineq_l,G1_l,G2_l,G3_l] = Ineq_Calc(C_l,phi_l,psi_l ,N_l,nr_l,nu_l,n_l,yl_max,yl_min,delmax_l,delmin_l,B_l);
