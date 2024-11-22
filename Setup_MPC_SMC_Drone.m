@@ -17,7 +17,7 @@ J = diag([Jxx Jyy Jzz]);
 %% %Z MPC parameters
 
 N = 10;
-ts_z = 0.25;
+ts_z = 0.1;
 
 Q_z = 10;      %500
 Qt_z = 0.005;     %-0.005
@@ -40,11 +40,12 @@ F2 = 0;
 F3 = 0;
 F4 = 0;
 
+
 Phi = [];
 Psi = [];
 G_mat = [];
 
-u_des = 0;
+u_des = m*g;
 
 PHI_I = A_zd;
 Aux_PSI_I = B_zd;
@@ -66,12 +67,14 @@ for i = 1:N
     pi_nu = PI_i(i,nu,N);
 
 
+   
     H = H + 2*(PSI_I'*C'*Q_z*C*PSI_I + pi_nu'*Qt_z*pi_nu);
     F1 = F1 + 2*(PSI_I'*C'*Q_z*C*PHI_I); % falta multiplicar por w(k)
     F2 = F2 - 2*(PSI_I'*C'*Q_z*pi_n); % falta multiplicar por ytilde
     F3 = F3 - 2*(pi_nu'*Qt_z); % falta multiplicar por vdeseada
     %F4 = F4 + 2*(PSI_I'*C'*Q_z*C*THETA_I);
-    F4 = F4 + 2*(PSI_I'*C'*Qt_z*C*SumG);
+    F4 = F4 - 2*(PSI_I'*C'*Qt_z*C*SumG);
+    
 
     PHI_I = PHI_I*A_zd;
     Aux_PSI_I = [A_zd*Aux_PSI_I B_zd];
@@ -83,11 +86,11 @@ end
 
 %% XY MPC parameters
 
-N_xy = 10;
-ts_xy = 0.25;
+N_xy = 15;
+ts_xy = 0.1;
 
 Q_xy = diag([10 10]);
-R_xy = diag([5 5]);
+R_xy = diag([15 15]);
 
 
 A_xy = [
@@ -134,11 +137,17 @@ for i = 1:N_xy
     pi_n = PI_i(i,ny_xy,N_xy);
     pi_nu = PI_i(i,nu_xy,N_xy);
 
-
-    H_xy = H_xy + 2*(PSI_xy_I'*C_xy'*Q_xy*C_xy*PSI_xy_I + pi_nu'*R_xy*pi_nu);
     F1_xy = F1_xy + 2*(PSI_xy_I'*C_xy'*Q_xy*C_xy*PHI_xy_I); % falta multiplicar por x(k)
     F2_xy = F2_xy - 2*(PSI_xy_I'*C_xy'*Q_xy*pi_n); % falta multiplicar por ytilde
     F3_xy = F3_xy - 2*(pi_nu'*R_xy); % falta multiplicar por udeseada
+
+    if i < N
+        pi_2nu = PI_i(i+1,nu_xy,N_xy);
+        H_xy = H_xy + 2*(PSI_xy_I'*C_xy'*Q_xy*C_xy*PSI_xy_I + pi_nu'*R_xy*pi_nu + (pi_2nu - pi_nu)'*R_xy*(pi_2nu - pi_nu));
+
+    else
+        H_xy = H_xy + 2*(PSI_xy_I'*C_xy'*Q_xy*C_xy*PSI_xy_I + pi_nu'*R_xy*pi_nu);
+    end
 
     PHI_xy_I = PHI_xy_I*A_xy_d;
     Aux_PSI_xy_I = [A_xy_d*Aux_PSI_xy_I B_xy_d];
@@ -151,14 +160,14 @@ end
 
 %% Setup Linear Movement Controller Parameters
 
-N_l = 10;        %Prediction horizon for the linear displacement 10
-ts_l = 0.25;    
+N_l = 15;        %Prediction horizon for the linear displacement 10
+ts_l = 0.1;    
 
 % Qy_l = [50 0; 0 50];     %1000 500
 % Qu_l = [1 0; 0 1]; %75 50
 
-Qy_l = [10 0; 0 10];     %10 10
-Qu_l = [5 0; 0 5]; %1 1
+Qy_l = [20 0; 0 20];     %10 10
+Qu_l = [105 0; 0 105]; %1 1
 
 ud_l = [0;0];
           
@@ -171,8 +180,8 @@ D_l = [0 0; 0 0];
 [n_l,nu_l] = size(B_l);
 nr_l = size(C_l,1);
 
-ul_max = [pi/4;pi/4];    %Setup the upper and lower input constraints (RP commands)
-ul_min = [-pi/4;-pi/4];
+ul_max = [pi/12;pi/12];    %Setup the upper and lower input constraints (RP commands)
+ul_min = [-pi/12;-pi/12];
 
 yl_max = [2;2];
 yl_min = [-2;-2];
